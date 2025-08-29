@@ -21,6 +21,7 @@ import {
   getUserById,
   getUserLastFlights,
   getUserPireps,
+  getUserRank,
 } from '@/db/queries';
 import { getCurrentUserRoles, requireRole } from '@/lib/auth-check';
 import { parseRolesField } from '@/lib/roles';
@@ -95,6 +96,8 @@ export default async function AdminUserDetailPage({
   // No one can reset the owner's password
   const canResetPassword = canPerformActions && !isTargetUserOwner;
 
+  const userRank = await getUserRank(calculatedFlightTime);
+
   return (
     <PageLayout className="space-y-6">
       <Button asChild className="mb-4" size="sm" variant="outline">
@@ -105,7 +108,11 @@ export default async function AdminUserDetailPage({
       </Button>
 
       <div className="space-y-6">
-        <UserProfile user={user} canManageRoles={canManageRoles} />
+        <UserProfile
+          user={user}
+          canManageRoles={canManageRoles}
+          rankName={userRank?.name ?? null}
+        />
 
         <UserStats
           user={user}
