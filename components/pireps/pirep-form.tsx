@@ -105,10 +105,10 @@ export function PirepForm({ aircraft, multipliers }: PirepFormProps) {
       flightNumber: '',
       departureIcao: '',
       arrivalIcao: '',
-      flightTimeHours: 0,
-      flightTimeMinutes: 0,
-      cargo: 0,
-      fuelBurned: 0,
+      flightTimeHours: Number.NaN,
+      flightTimeMinutes: Number.NaN,
+      cargo: Number.NaN,
+      fuelBurned: Number.NaN,
       comments: '',
     },
   });
@@ -170,8 +170,13 @@ export function PirepForm({ aircraft, multipliers }: PirepFormProps) {
   });
 
   function onSubmit(data: PirepFormValues) {
-    const totalFlightTimeMinutes =
-      data.flightTimeHours * 60 + data.flightTimeMinutes;
+    const hoursValue = Number.isNaN(data.flightTimeHours)
+      ? 0
+      : data.flightTimeHours;
+    const minutesValue = Number.isNaN(data.flightTimeMinutes)
+      ? 0
+      : data.flightTimeMinutes;
+    const totalFlightTimeMinutes = hoursValue * 60 + minutesValue;
 
     execute({
       flightNumber: data.flightNumber,
@@ -179,8 +184,8 @@ export function PirepForm({ aircraft, multipliers }: PirepFormProps) {
       departureIcao: data.departureIcao,
       arrivalIcao: data.arrivalIcao,
       flightTime: totalFlightTimeMinutes,
-      cargo: data.cargo,
-      fuelBurned: data.fuelBurned,
+      cargo: Number.isNaN(data.cargo) ? 0 : data.cargo,
+      fuelBurned: Number.isNaN(data.fuelBurned) ? 0 : data.fuelBurned,
       multiplierId:
         data.multiplierId === 'none' ? undefined : data.multiplierId,
       aircraftId: data.aircraftId,
@@ -328,8 +333,16 @@ export function PirepForm({ aircraft, multipliers }: PirepFormProps) {
                   <Input
                     placeholder="11"
                     type="text"
-                    {...field}
-                    value={field.value || ''}
+                    name={field.name}
+                    ref={field.ref}
+                    onBlur={field.onBlur}
+                    value={
+                      field.value === undefined ||
+                      field.value === null ||
+                      Number.isNaN(field.value as number)
+                        ? ''
+                        : (field.value as number)
+                    }
                     onKeyDown={(e) => {
                       if (
                         e.key === '-' ||
@@ -341,12 +354,17 @@ export function PirepForm({ aircraft, multipliers }: PirepFormProps) {
                       }
                     }}
                     onChange={(e) => {
-                      let value = e.target.value.replace(/[^0-9]/g, '');
+                      const val = e.target.value;
+                      if (val === '') {
+                        field.onChange(Number.NaN);
+                        return;
+                      }
+                      let value = val.replace(/[^0-9]/g, '');
                       if (value) {
                         value = Math.min(Number(value), 1000).toString();
                         field.onChange(Number(value));
                       } else {
-                        field.onChange(0);
+                        field.onChange(Number.NaN);
                       }
                     }}
                   />
@@ -368,8 +386,16 @@ export function PirepForm({ aircraft, multipliers }: PirepFormProps) {
                   <Input
                     placeholder="34"
                     type="text"
-                    {...field}
-                    value={field.value || ''}
+                    name={field.name}
+                    ref={field.ref}
+                    onBlur={field.onBlur}
+                    value={
+                      field.value === undefined ||
+                      field.value === null ||
+                      Number.isNaN(field.value as number)
+                        ? ''
+                        : (field.value as number)
+                    }
                     onKeyDown={(e) => {
                       if (
                         e.key === '-' ||
@@ -381,12 +407,17 @@ export function PirepForm({ aircraft, multipliers }: PirepFormProps) {
                       }
                     }}
                     onChange={(e) => {
-                      let value = e.target.value.replace(/[^0-9]/g, '');
+                      const val = e.target.value;
+                      if (val === '') {
+                        field.onChange(Number.NaN);
+                        return;
+                      }
+                      let value = val.replace(/[^0-9]/g, '');
                       if (value) {
                         value = Math.min(Number(value), 59).toString();
                         field.onChange(Number(value));
                       } else {
-                        field.onChange(0);
+                        field.onChange(Number.NaN);
                       }
                     }}
                   />
@@ -470,8 +501,16 @@ export function PirepForm({ aircraft, multipliers }: PirepFormProps) {
                   <Input
                     placeholder="2000"
                     type="text"
-                    {...field}
-                    value={field.value || ''}
+                    name={field.name}
+                    ref={field.ref}
+                    onBlur={field.onBlur}
+                    value={
+                      field.value === undefined ||
+                      field.value === null ||
+                      Number.isNaN(field.value as number)
+                        ? ''
+                        : (field.value as number)
+                    }
                     onKeyDown={(e) => {
                       if (
                         e.key === '-' ||
@@ -483,7 +522,12 @@ export function PirepForm({ aircraft, multipliers }: PirepFormProps) {
                       }
                     }}
                     onChange={(e) => {
-                      let value = e.target.value.replace(/[^0-9]/g, '');
+                      const val = e.target.value;
+                      if (val === '') {
+                        field.onChange(Number.NaN);
+                        return;
+                      }
+                      let value = val.replace(/[^0-9]/g, '');
                       if (value) {
                         value = Math.min(
                           Number(value),
@@ -491,7 +535,7 @@ export function PirepForm({ aircraft, multipliers }: PirepFormProps) {
                         ).toString();
                         field.onChange(Number(value));
                       } else {
-                        field.onChange(0);
+                        field.onChange(Number.NaN);
                       }
                     }}
                   />
@@ -513,8 +557,16 @@ export function PirepForm({ aircraft, multipliers }: PirepFormProps) {
                   <Input
                     placeholder="8000"
                     type="text"
-                    {...field}
-                    value={field.value || ''}
+                    name={field.name}
+                    ref={field.ref}
+                    onBlur={field.onBlur}
+                    value={
+                      field.value === undefined ||
+                      field.value === null ||
+                      Number.isNaN(field.value as number)
+                        ? ''
+                        : (field.value as number)
+                    }
                     onKeyDown={(e) => {
                       if (
                         e.key === '-' ||
@@ -526,12 +578,17 @@ export function PirepForm({ aircraft, multipliers }: PirepFormProps) {
                       }
                     }}
                     onChange={(e) => {
-                      let value = e.target.value.replace(/[^0-9]/g, '');
+                      const val = e.target.value;
+                      if (val === '') {
+                        field.onChange(Number.NaN);
+                        return;
+                      }
+                      let value = val.replace(/[^0-9]/g, '');
                       if (value) {
                         value = Math.min(Number(value), MAX_FUEL_KG).toString();
                         field.onChange(Number(value));
                       } else {
-                        field.onChange(0);
+                        field.onChange(Number.NaN);
                       }
                     }}
                   />
