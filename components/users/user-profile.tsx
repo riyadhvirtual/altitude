@@ -16,9 +16,14 @@ interface UserProfileProps {
     discordUsername?: string | null;
   };
   canManageRoles: boolean;
+  rankName?: string | null;
 }
 
-export function UserProfile({ user, canManageRoles }: UserProfileProps) {
+export function UserProfile({
+  user,
+  canManageRoles,
+  rankName,
+}: UserProfileProps) {
   return (
     <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-4 p-1">
       <Avatar className="size-20 sm:size-20 flex-shrink-0">
@@ -57,10 +62,19 @@ export function UserProfile({ user, canManageRoles }: UserProfileProps) {
               </span>
             )}
           </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-3 w-full max-w-full">
+          <div className="flex flex-col items-center sm:items-start justify-center sm:justify-start gap-1 w-full max-w-full">
             <p className="text-sm sm:text-base text-muted-foreground break-all text-center sm:text-left">
               {user.email}
             </p>
+            {typeof rankName === 'string' && rankName.length > 0 ? (
+              <span className="rounded px-2 py-0.5 text-xs bg-panel-accent text-panel-accent-foreground dark:bg-nav-hover dark:text-panel-foreground">
+                {rankName}
+              </span>
+            ) : (
+              <span className="rounded px-2 py-0.5 text-xs bg-panel-accent text-panel-accent-foreground dark:bg-nav-hover dark:text-panel-foreground">
+                N/A
+              </span>
+            )}
           </div>
         </div>
       </div>
