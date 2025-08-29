@@ -29,8 +29,8 @@ const schema = z.object({
     .string()
     .length(4, { message: 'ICAO must be exactly 4 letters' })
     .regex(/^[A-Z]{4}$/, { message: 'ICAO must be 4 uppercase letters (A-Z)' }),
-  flightTimeHours: z.number().min(0),
-  flightTimeMinutes: z.number().min(0).max(59),
+  flightTimeHours: z.union([z.number().min(0), z.nan()]),
+  flightTimeMinutes: z.union([z.number().min(0).max(59), z.nan()]),
   details: z.string().optional(),
 });
 
@@ -85,8 +85,10 @@ export default function RouteForm({
       arrivalIcao: initialRoute?.arrivalIcao || '',
       flightTimeHours: initialRoute
         ? Math.floor(initialRoute.flightTime / 60)
-        : 0,
-      flightTimeMinutes: initialRoute ? initialRoute.flightTime % 60 : 0,
+        : Number.NaN,
+      flightTimeMinutes: initialRoute
+        ? initialRoute.flightTime % 60
+        : Number.NaN,
       details: initialRoute?.details || '',
     },
   });
@@ -108,7 +110,7 @@ export default function RouteForm({
   };
 
   const addFlight = () => {
-    const v = flightInput.trim().toUpperCase();
+    const v = flightInput.trim();
     if (v && !flightNumbers.includes(v)) {
       setFlightNumbers((p) => [...p, v]);
     }
@@ -124,9 +126,21 @@ export default function RouteForm({
     if (!selectedAircraftIds.length) {
       return toast.error('Select at least one aircraft');
     }
+    if (
+      Number.isNaN(data.flightTimeHours) ||
+      Number.isNaN(data.flightTimeMinutes)
+    ) {
+      return toast.error('Please enter flight time (hours and minutes)');
+    }
     setLoading(true);
     try {
-      const total = data.flightTimeHours * 60 + data.flightTimeMinutes;
+      const hoursValue = Number.isNaN(data.flightTimeHours)
+        ? 0
+        : data.flightTimeHours || 0;
+      const minutesValue = Number.isNaN(data.flightTimeMinutes)
+        ? 0
+        : data.flightTimeMinutes || 0;
+      const total = hoursValue * 60 + minutesValue;
       const formData = {
         id: mode === 'create' ? 'new' : initialRoute?.id || '',
         departureIcao: data.departureIcao.toUpperCase(),
@@ -183,14 +197,14 @@ export default function RouteForm({
             <div className="flex gap-2">
               <Input
                 value={flightInput}
-                onChange={(e) => setFlightInput(e.target.value)}
+                onChange={(e) => setFlightInput(e.target.value.toUpperCase())}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
                     addFlight();
                   }
                 }}
-                placeholder="Type flight number and press Enter"
+                placeholder="Type flight number and press enter"
               />
               <Button type="button" onClick={addFlight} variant="secondary">
                 <Plus className="h-4 w-4" />
@@ -256,10 +270,17 @@ export default function RouteForm({
                 <FormLabel>Hours *</FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    {...field}
-                    min={0}
-                    max={1000}
+                    type="text"
+                    name={field.name}
+                    ref={field.ref}
+                    onBlur={field.onBlur}
+                    value={
+                      field.value === undefined ||
+                      field.value === null ||
+                      Number.isNaN(field.value as number)
+                        ? ''
+                        : (field.value as number)
+                    }
                     placeholder="5"
                     onKeyDown={(e) => {
                       if (
@@ -272,14 +293,19 @@ export default function RouteForm({
                       }
                     }}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/[^0-9]/g, '');
-                      if (value) {
-                        const numValue = Math.min(Number(value), 1000);
-                        field.onChange(numValue);
-                      } else {
-                        field.onChange(0);
+                      const val = e.target.value;
+                      if (val === '') {
+                        field.onChange(Number.NaN);
+                        return;
                       }
+                      const value = val.replace(/[^0-9]/g, '');
+                      // Only allow 2 digits maximum - block anything longer
+                      if (value.length <= 2) {
+                        field.onChange(value ? Number(value) : Number.NaN);
+                      }
+                      // If value is longer than 2 digits, don't update the field
                     }}
+                    maxLength={2}
                   />
                 </FormControl>
                 <FormMessage />
@@ -294,10 +320,17 @@ export default function RouteForm({
                 <FormLabel>Minutes *</FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    {...field}
-                    min={0}
-                    max={59}
+                    type="text"
+                    name={field.name}
+                    ref={field.ref}
+                    onBlur={field.onBlur}
+                    value={
+                      field.value === undefined ||
+                      field.value === null ||
+                      Number.isNaN(field.value as number)
+                        ? ''
+                        : (field.value as number)
+                    }
                     placeholder="30"
                     onKeyDown={(e) => {
                       if (
@@ -310,12 +343,17 @@ export default function RouteForm({
                       }
                     }}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/[^0-9]/g, '');
+                      const val = e.target.value;
+                      if (val === '') {
+                        field.onChange(Number.NaN);
+                        return;
+                      }
+                      const value = val.replace(/[^0-9]/g, '');
                       if (value) {
                         const numValue = Math.min(Number(value), 59);
                         field.onChange(numValue);
                       } else {
-                        field.onChange(0);
+                        field.onChange(Number.NaN);
                       }
                     }}
                   />
