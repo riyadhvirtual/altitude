@@ -1,0 +1,1 @@
+ALTER TABLE `discord_config` ADD `client_id` text;

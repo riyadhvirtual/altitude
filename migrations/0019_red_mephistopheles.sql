@@ -1,0 +1,1 @@
+ALTER TABLE `airline` ADD `favicon_url` text;

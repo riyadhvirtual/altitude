@@ -1,0 +1,1 @@
+ALTER TABLE `airline` ADD `auth_image_url` text;

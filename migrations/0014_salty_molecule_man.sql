@@ -1,0 +1,1 @@
+ALTER TABLE `airline` ADD `inactivity_period` integer;

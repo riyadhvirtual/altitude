@@ -1,0 +1,1 @@
+ALTER TABLE `pireps` ADD `denied_reason` text;

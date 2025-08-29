@@ -1,0 +1,37 @@
+services:
+  app:
+    build: .
+    container_name: altitude
+    mem_limit: 800m
+    memswap_limit: 800m
+    ports:
+      - '127.0.0.1:3000:3000'
+    volumes:
+      - ./data:/app/data
+    environment:
+      - NODE_ENV=production
+      - LOCAL_STORAGE_ROOT=/app/data/uploads
+      - LOCAL_STORAGE_PUBLIC_URL=/files
+      - BETTER_AUTH_SECRET=
+      - BETTER_AUTH_URL=
+      - DATABASE_URL=file:///app/data/database.sqlite
+      - ENCRYPTION_KEY=
+      - PROCESS_MANAGER=pm2
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./data/uploads:/uploads:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

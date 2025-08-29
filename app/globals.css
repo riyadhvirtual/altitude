@@ -1,0 +1,173 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0 0 0);
+
+  --card: oklch(0.9697 0.0017 247.84);
+  --card-foreground: oklch(20.64% 0.0388 265.55);
+
+  --popover: oklch(100% 0 89.88);
+  --popover-foreground: oklch(20.64% 0.0388 265.55);
+
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+
+  --secondary: oklch(0.22 0 0);
+  --secondary-foreground: oklch(0.98 0 0);
+
+  --muted: oklch(95% 0 0);
+  --muted-foreground: oklch(50% 0 0);
+
+  --accent: oklch(85% 0 0);
+  --accent-foreground: oklch(30% 0 0);
+
+  --destructive: oklch(63.56% 0.2082 25.38);
+  --destructive-foreground: oklch(98.38% 0.0035 247.86);
+
+  --success: oklch(60% 0.12 140);
+  --success-foreground: oklch(98.38% 0.0035 247.86);
+
+  --border: oklch(90% 0 0);
+  --input: oklch(92.58% 0.0132 255.03);
+  --ring: #000000;
+
+  --radius: 0.75rem;
+  --overlay: oklch(0 0% 0% / 0.4);
+
+  --panel-background: oklch(0.9697 0.0017 247.84);
+  --panel-foreground: oklch(20.64% 0.0388 265.55);
+  --panel-primary: #000000;
+  --panel-primary-foreground: #ffffff;
+  --panel-accent: oklch(92% 0 0);
+  --panel-accent-foreground: oklch(20% 0 0);
+  --panel-border: oklch(92.58% 0.0132 255.03);
+  --panel-ring: #000000;
+
+  --dropdown-background: oklch(0.98 0.001 247.84);
+  --dropdown-foreground: oklch(20.64% 0.0388 265.55);
+
+  --nav-hover: oklch(95% 0 0);
+}
+
+.dark {
+  --background: oklch(23.61% 0.0025 264.52);
+  --foreground: oklch(96.19% 0 89.88);
+
+  --card: oklch(26.79% 0.003 264.51);
+  --card-foreground: oklch(96.19% 0 89.88);
+
+  --popover: oklch(26.79% 0.003 264.51);
+  --popover-foreground: oklch(96.19% 0 89.88);
+
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+
+  --secondary: oklch(0.22 0 0);
+  --secondary-foreground: oklch(0.95 0 0);
+
+  --muted: oklch(25% 0 0);
+  --muted-foreground: oklch(70% 0 0);
+
+  --accent: oklch(35% 0 0);
+  --accent-foreground: oklch(95% 0 0);
+
+  --destructive: oklch(56.14% 0.1947 26.17);
+  --destructive-foreground: oklch(96.19% 0 89.88);
+
+  --success: oklch(60% 0.12 140);
+  --success-foreground: oklch(96.19% 0 89.88);
+
+  --border: oklch(35% 0 0);
+  --input: oklch(31.88% 0.0039 264.51);
+  --ring: #ffffff;
+
+  --overlay: oklch(100% 0 0% / 0.1);
+
+  --panel-background: oklch(21.44% 0.0021 264.52);
+  --panel-foreground: oklch(96.19% 0 89.88);
+  --panel-primary: #ffffff;
+  --panel-primary-foreground: #000000;
+  --panel-accent: oklch(50% 0 0);
+  --panel-accent-foreground: oklch(98% 0 0);
+  --panel-border: oklch(29.87% 0.0035 264.51);
+  --panel-ring: #ffffff;
+
+  --dropdown-background: oklch(25% 0.002 264.52);
+  --dropdown-foreground: oklch(96.19% 0 89.88);
+
+  --nav-hover: oklch(32% 0 0);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-panel: var(--panel-background);
+  --color-panel-foreground: var(--panel-foreground);
+  --color-panel-primary: var(--panel-primary);
+  --color-panel-primary-foreground: var(--panel-primary-foreground);
+  --color-panel-accent: var(--panel-accent);
+  --color-panel-accent-foreground: var(--panel-accent-foreground);
+  --color-panel-border: var(--panel-border);
+  --color-panel-ring: var(--panel-ring);
+  --color-dropdown: var(--dropdown-background);
+  --color-dropdown-foreground: var(--dropdown-foreground);
+  --color-overlay: var(--overlay);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-serif);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-2xs: var(--shadow-2xs);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
+
+  --color-nav-hover: var(--nav-hover);
+}
+
+/* Hide scrollbar but maintain scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

@@ -1,0 +1,1 @@
+ALTER TABLE `discord_config` ADD `event_channel_id` text;

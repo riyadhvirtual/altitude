@@ -1,0 +1,2 @@
+departure_icao,arrival_icao,flight_time,details,flight_numbers,aircraft
+KJFK,KLAX,05:00,Example route,AA100;AA101,Airbus A320 - Air France; Airbus A320 - Air Asia
