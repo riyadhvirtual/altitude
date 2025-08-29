@@ -71,8 +71,8 @@ const pirepFormSchema = z.object({
     .string()
     .length(4, 'ICAO code must be exactly 4 letters.')
     .regex(/^[A-Z]{4}$/, 'ICAO code must contain only uppercase letters.'),
-  flightTimeHours: z.number().min(0),
-  flightTimeMinutes: z.number().min(0).max(59),
+  flightTimeHours: z.union([z.number().min(0), z.nan()]),
+  flightTimeMinutes: z.union([z.number().min(0).max(59), z.nan()]),
   aircraftId: z.string().min(1, 'Please select an aircraft.'),
   cargo: z.number().min(0),
   fuelBurned: z.number().min(0),
@@ -170,6 +170,14 @@ export function PirepForm({ aircraft, multipliers }: PirepFormProps) {
   });
 
   function onSubmit(data: PirepFormValues) {
+    if (
+      Number.isNaN(data.flightTimeHours) ||
+      Number.isNaN(data.flightTimeMinutes)
+    ) {
+      toast.error('Please enter flight time (hours and minutes)');
+      return;
+    }
+
     const hoursValue = Number.isNaN(data.flightTimeHours)
       ? 0
       : data.flightTimeHours;
@@ -212,7 +220,15 @@ export function PirepForm({ aircraft, multipliers }: PirepFormProps) {
                   Flight Number *
                 </FormLabel>
                 <FormControl>
-                  <Input placeholder="AF2" {...field} maxLength={10} />
+                  <Input
+                    placeholder="AF2"
+                    {...field}
+                    maxLength={10}
+                    onChange={(e) => {
+                      const value = e.target.value.toUpperCase();
+                      field.onChange(value);
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -359,14 +375,14 @@ export function PirepForm({ aircraft, multipliers }: PirepFormProps) {
                         field.onChange(Number.NaN);
                         return;
                       }
-                      let value = val.replace(/[^0-9]/g, '');
-                      if (value) {
-                        value = Math.min(Number(value), 1000).toString();
-                        field.onChange(Number(value));
-                      } else {
-                        field.onChange(Number.NaN);
+                      const value = val.replace(/[^0-9]/g, '');
+                      // Only allow 2 digits maximum - block anything longer
+                      if (value.length <= 2) {
+                        field.onChange(value ? Number(value) : Number.NaN);
                       }
+                      // If value is longer than 2 digits, don't update the field
                     }}
+                    maxLength={2}
                   />
                 </FormControl>
                 <FormMessage />
