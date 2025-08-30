@@ -1,7 +1,7 @@
 'use client';
 
 import { Filter, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,7 +37,8 @@ export type FilterField =
   | 'departureIcao'
   | 'arrivalIcao'
   | 'aircraftId'
-  | 'flightTime';
+  | 'flightTime'
+  | 'airline';
 
 export interface FilterCondition {
   id: string;
@@ -69,6 +70,7 @@ const FIELD_LABELS: Record<FilterField, string> = {
   arrivalIcao: 'Arrival',
   aircraftId: 'Aircraft',
   flightTime: 'Flight Time',
+  airline: 'Airline',
 };
 
 const OPERATOR_LABELS: Record<FilterOperator, string> = {
@@ -89,6 +91,7 @@ const FIELD_MAX_LENGTHS: Partial<Record<FilterField, number>> = {
   arrivalIcao: 4,
   flightTime: 5, // hh:mm
   aircraftId: 36, // uuid length
+  airline: 64,
 };
 
 const DEFAULT_MAX_LENGTH = 16;
@@ -109,6 +112,8 @@ const getOperatorsForField = (field: FilterField): FilterOperator[] => {
         'less_equal',
       ];
     case 'aircraftId':
+      return ['is', 'is_not'];
+    case 'airline':
       return ['is', 'is_not'];
     default:
       return ['contains', 'is', 'is_not', 'starts_with', 'ends_with'];
@@ -426,6 +431,15 @@ function FilterEditor({
   };
 
   const maxLength = getMaxLengthForField(localFilter.field);
+  const airlineOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const a of aircraft) {
+      if (a.livery) {
+        set.add(a.livery);
+      }
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [aircraft]);
 
   const canSave =
     !operatorNeedsValue(localFilter.operator) ||
@@ -436,6 +450,88 @@ function FilterEditor({
       : !!localFilter.value &&
         (typeof localFilter.value !== 'string' ||
           localFilter.value.length <= maxLength));
+
+  const getPlaceholder = (field: FilterField): string => {
+    if (field === 'flightTime') {
+      return 'HH:MM (e.g., 01:30)';
+    }
+    if (field === 'departureIcao' || field === 'arrivalIcao') {
+      return 'e.g., LFPG';
+    }
+    if (field === 'airline') {
+      return 'e.g., Air France';
+    }
+    return 'Enter value...';
+  };
+
+  const renderValueInput = () => {
+    switch (localFilter.field) {
+      case 'aircraftId':
+        return (
+          <Select
+            value={localFilter.value?.toString() || ''}
+            onValueChange={(value) => updateFilter({ value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select aircraft..." />
+            </SelectTrigger>
+            <SelectContent>
+              {aircraft.map((ac) => (
+                <SelectItem key={ac.id} value={ac.id}>
+                  {ac.name}
+                  {ac.livery ? ` (${ac.livery})` : ''}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      case 'airline':
+        return (
+          <Select
+            value={localFilter.value?.toString() || ''}
+            onValueChange={(value) => updateFilter({ value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select airline..." />
+            </SelectTrigger>
+            <SelectContent>
+              {airlineOptions.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      default:
+        return (
+          <Input
+            type="text"
+            pattern="^([0-9]{1,2}):([0-5][0-9])$"
+            placeholder={getPlaceholder(localFilter.field)}
+            value={
+              localFilter.field === 'flightTime'
+                ? typeof localFilter.value === 'number'
+                  ? convertMinutesToTime(localFilter.value)
+                  : (localFilter.value as string | number | undefined) || ''
+                : localFilter.value?.toString() || ''
+            }
+            onChange={(e) => {
+              let value = e.target.value;
+              if (value.length > maxLength) {
+                value = value.slice(0, maxLength);
+              }
+              if (localFilter.field === 'flightTime') {
+                updateFilter({ value }); // store raw string
+              } else {
+                updateFilter({ value });
+              }
+            }}
+            maxLength={maxLength}
+          />
+        );
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -485,56 +581,7 @@ function FilterEditor({
         {operatorNeedsValue(localFilter.operator) && (
           <div>
             <label className="text-sm font-medium mb-1 block">Value</label>
-            {localFilter.field === 'aircraftId' ? (
-              <Select
-                value={localFilter.value?.toString() || ''}
-                onValueChange={(value) => updateFilter({ value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select aircraft..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {aircraft.map((ac) => (
-                    <SelectItem key={ac.id} value={ac.id}>
-                      {ac.name}
-                      {ac.livery ? ` (${ac.livery})` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input
-                type="text"
-                pattern="^([0-9]{1,2}):([0-5][0-9])$"
-                placeholder={
-                  localFilter.field === 'flightTime'
-                    ? 'HH:MM (e.g., 01:30)'
-                    : localFilter.field === 'departureIcao' ||
-                        localFilter.field === 'arrivalIcao'
-                      ? 'e.g., LFPG'
-                      : 'Enter value...'
-                }
-                value={
-                  localFilter.field === 'flightTime'
-                    ? typeof localFilter.value === 'number'
-                      ? convertMinutesToTime(localFilter.value)
-                      : (localFilter.value as string | number | undefined) || ''
-                    : localFilter.value?.toString() || ''
-                }
-                onChange={(e) => {
-                  let value = e.target.value;
-                  if (value.length > maxLength) {
-                    value = value.slice(0, maxLength);
-                  }
-                  if (localFilter.field === 'flightTime') {
-                    updateFilter({ value }); // store raw string
-                  } else {
-                    updateFilter({ value });
-                  }
-                }}
-                maxLength={maxLength}
-              />
-            )}
+            {renderValueInput()}
           </div>
         )}
       </div>

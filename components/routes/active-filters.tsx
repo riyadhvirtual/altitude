@@ -26,6 +26,7 @@ const FIELD_LABELS: Record<string, string> = {
   arrivalIcao: 'Arrival',
   aircraftId: 'Aircraft',
   flightTime: 'Flight Time',
+  airline: 'Airline',
 };
 
 const OPERATOR_LABELS: Record<string, string> = {

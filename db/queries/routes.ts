@@ -2,6 +2,7 @@ import { desc, eq, SQL, sql } from 'drizzle-orm';
 
 import { db } from '@/db';
 import {
+  aircraft,
   type Route,
   routeAircraft,
   routes,
@@ -25,20 +26,12 @@ export type FilterField =
   | 'departureIcao'
   | 'arrivalIcao'
   | 'aircraftId'
-  | 'flightTime';
+  | 'flightTime'
+  | 'airline';
 
 export interface RouteFilterCondition extends FilterCondition {
   field: FilterField;
   operator: FilterOperator;
-}
-
-export interface SimpleFilters {
-  departureIcao?: string;
-  arrivalIcao?: string;
-  flightNumber?: string;
-  aircraftId?: string;
-  minFlightTime?: number;
-  maxFlightTime?: number;
 }
 
 type RouteRow = {
@@ -86,6 +79,26 @@ const createFlightNumberSubquery = (condition: SQL<boolean>): SQL<boolean> =>
 
 const createAircraftSubquery = (condition: SQL<boolean>): SQL<boolean> =>
   sql<boolean>`${routes.id} IN (SELECT ${routeAircraft.routeId} FROM ${routeAircraft} WHERE ${condition})`;
+
+const createAircraftWithLiverySubquery = (
+  condition: SQL<boolean>
+): SQL<boolean> =>
+  sql<boolean>`${routes.id} IN (
+    SELECT ${routeAircraft.routeId}
+    FROM ${routeAircraft}
+    JOIN ${aircraft} ON ${routeAircraft.aircraftId} = ${aircraft.id}
+    WHERE ${condition}
+  )`;
+
+const createAircraftWithLiveryNotSubquery = (
+  condition: SQL<boolean>
+): SQL<boolean> =>
+  sql<boolean>`${routes.id} NOT IN (
+    SELECT ${routeAircraft.routeId}
+    FROM ${routeAircraft}
+    JOIN ${aircraft} ON ${routeAircraft.aircraftId} = ${aircraft.id}
+    WHERE ${condition}
+  )`;
 
 const buildStringCondition = (
   field: typeof routes.departureIcao | typeof routes.arrivalIcao,
@@ -162,6 +175,38 @@ const buildAircraftCondition = (
   }
 };
 
+const buildAirlineCondition = (
+  operator: FilterOperator,
+  value: string | number | undefined
+): SQL<boolean> => {
+  const stringValue = String(value || '');
+
+  switch (operator) {
+    case 'contains':
+      return createAircraftWithLiverySubquery(
+        sql<boolean>`${aircraft.livery} LIKE ${`%${stringValue}%`} COLLATE NOCASE`
+      );
+    case 'is':
+      return createAircraftWithLiverySubquery(
+        sql<boolean>`${aircraft.livery} = ${stringValue} COLLATE NOCASE`
+      );
+    case 'is_not':
+      return createAircraftWithLiveryNotSubquery(
+        sql<boolean>`${aircraft.livery} = ${stringValue} COLLATE NOCASE`
+      );
+    case 'starts_with':
+      return createAircraftWithLiverySubquery(
+        sql<boolean>`${aircraft.livery} LIKE ${`${stringValue}%`} COLLATE NOCASE`
+      );
+    case 'ends_with':
+      return createAircraftWithLiverySubquery(
+        sql<boolean>`${aircraft.livery} LIKE ${`%${stringValue}`} COLLATE NOCASE`
+      );
+    default:
+      return sql<boolean>`1 = 1`;
+  }
+};
+
 const buildFlightTimeCondition = (
   operator: FilterOperator,
   value: string | number | undefined
@@ -200,6 +245,8 @@ const buildFieldCondition = (condition: RouteFilterCondition): SQL<boolean> => {
       return buildAircraftCondition(operator, value);
     case 'flightTime':
       return buildFlightTimeCondition(operator, value);
+    case 'airline':
+      return buildAirlineCondition(operator, value);
     default:
       return sql<boolean>`1 = 1`;
   }
@@ -211,52 +258,10 @@ const combineConditions = (conditions: SQL<boolean>[]): SQL<boolean> => {
     : sql<boolean>`1 = 1`;
 };
 
-const buildSimpleFilterConditions = (
-  filters: SimpleFilters
-): SQL<boolean>[] => {
-  const conditions: SQL<boolean>[] = [];
-  const {
-    departureIcao,
-    arrivalIcao,
-    flightNumber,
-    aircraftId,
-    minFlightTime,
-    maxFlightTime,
-  } = filters;
-
-  if (departureIcao) {
-    conditions.push(
-      sql<boolean>`upper(${routes.departureIcao}) LIKE upper(${`%${departureIcao}%`})`
-    );
-  }
-
-  if (arrivalIcao) {
-    conditions.push(
-      sql<boolean>`upper(${routes.arrivalIcao}) LIKE upper(${`%${arrivalIcao}%`})`
-    );
-  }
-
-  if (flightNumber) {
-    conditions.push(
-      sql<boolean>`${routes.id} IN (SELECT ${routesFlightNumbers.routeId} FROM ${routesFlightNumbers} WHERE upper(${routesFlightNumbers.flightNumber}) LIKE upper(${`%${flightNumber}%`}))`
-    );
-  }
-
-  if (aircraftId) {
-    conditions.push(
-      sql`${routes.id} IN (SELECT ${routeAircraft.routeId} FROM ${routeAircraft} WHERE ${routeAircraft.aircraftId} = ${aircraftId})`
-    );
-  }
-
-  if (minFlightTime !== undefined) {
-    conditions.push(sql<boolean>`${routes.flightTime} >= ${minFlightTime}`);
-  }
-
-  if (maxFlightTime !== undefined) {
-    conditions.push(sql<boolean>`${routes.flightTime} <= ${maxFlightTime}`);
-  }
-
-  return conditions;
+const combineOrConditions = (conditions: SQL<boolean>[]): SQL<boolean> => {
+  return conditions.length > 0
+    ? conditions.reduce((prev, curr) => sql<boolean>`(${prev}) OR (${curr})`)
+    : sql<boolean>`1 = 1`;
 };
 
 const buildPaginatedQuery = (
@@ -308,55 +313,51 @@ async function getRoutesPaginated(
   };
 }
 
-async function searchRoutes(
-  term: string,
-  page: number,
-  limit: number
-): Promise<PaginatedResult<RouteWithNumbers>> {
-  const searchCondition = sql<boolean>`(
-    upper(${routes.departureIcao}) LIKE upper(${`%${term}%`}) OR
-    upper(${routes.arrivalIcao}) LIKE upper(${`%${term}%`}) OR
-    ${routes.id} IN (
-      SELECT ${routesFlightNumbers.routeId}
-      FROM ${routesFlightNumbers}
-      WHERE upper(${routesFlightNumbers.flightNumber}) LIKE upper(${`%${term}%`})
-    )
-  )`;
-
-  const result = await buildPaginatedQuery(searchCondition, page, limit);
-
-  return {
-    routes: result.map(({ ...route }) =>
-      transformRouteResult(route as RouteRow)
-    ),
-    total: result[0]?.totalCount ?? 0,
-  };
-}
-
-async function filterRoutes(
-  filters: SimpleFilters,
-  page: number,
-  limit: number
-): Promise<PaginatedResult<RouteWithNumbers>> {
-  const conditions = buildSimpleFilterConditions(filters);
-  const combinedCondition = combineConditions(conditions);
-
-  const result = await buildPaginatedQuery(combinedCondition, page, limit);
-
-  return {
-    routes: result.map(({ ...route }) =>
-      transformRouteResult(route as RouteRow)
-    ),
-    total: result[0]?.totalCount ?? 0,
-  };
-}
-
 async function filterRoutesAdvanced(
   filters: RouteFilterCondition[],
   page: number,
   limit: number
 ): Promise<PaginatedResult<RouteWithNumbers>> {
-  const conditions = filters.map(buildFieldCondition);
+  const airlineIsValues: string[] = [];
+  const airlineIsNotValues: string[] = [];
+
+  const otherFilters: RouteFilterCondition[] = [];
+  for (const f of filters) {
+    if (f.field === 'airline' && f.value !== undefined && f.value !== '') {
+      const v = String(f.value);
+      if (f.operator === 'is') {
+        airlineIsValues.push(v);
+      } else if (f.operator === 'is_not') {
+        airlineIsNotValues.push(v);
+      } else {
+        otherFilters.push(f);
+      }
+    } else {
+      otherFilters.push(f);
+    }
+  }
+
+  const conditions: SQL<boolean>[] = otherFilters.map(buildFieldCondition);
+
+  if (airlineIsValues.length > 0) {
+    const uniq = Array.from(new Set(airlineIsValues));
+    const orConds = uniq.map(
+      (v) => sql<boolean>`${aircraft.livery} = ${v} COLLATE NOCASE`
+    );
+    conditions.push(
+      createAircraftWithLiverySubquery(combineOrConditions(orConds))
+    );
+  }
+
+  if (airlineIsNotValues.length > 0) {
+    const uniq = Array.from(new Set(airlineIsNotValues));
+    const orConds = uniq.map(
+      (v) => sql<boolean>`${aircraft.livery} = ${v} COLLATE NOCASE`
+    );
+    conditions.push(
+      createAircraftWithLiveryNotSubquery(combineOrConditions(orConds))
+    );
+  }
   const combinedCondition = combineConditions(conditions);
 
   const result = await buildPaginatedQuery(combinedCondition, page, limit);
@@ -369,10 +370,4 @@ async function filterRoutesAdvanced(
   };
 }
 
-export {
-  filterRoutes,
-  filterRoutesAdvanced,
-  getRouteById,
-  getRoutesPaginated,
-  searchRoutes,
-};
+export { filterRoutesAdvanced, getRouteById, getRoutesPaginated };
