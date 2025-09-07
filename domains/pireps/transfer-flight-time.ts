@@ -2,7 +2,9 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { db } from '@/db';
+import { getFlightTimeForUser } from '@/db/queries/users';
 import { pireps, users } from '@/db/schema';
+import { maybeScheduleRankup } from '@/lib/rankup-trigger';
 
 const _transferFlightTimeSchema = z.object({
   targetUserId: z.string().min(1, 'Target user ID is required'),
@@ -72,6 +74,13 @@ export async function transferFlightTime(data: TransferFlightTimeData) {
       updatedAt: now,
     })
     .returning();
+
+  const totalFlightTime = await getFlightTimeForUser(targetUserId);
+  maybeScheduleRankup(
+    targetUserId,
+    totalFlightTime - totalMinutes,
+    totalFlightTime
+  );
 
   return { newPirep, totalMinutes };
 }
