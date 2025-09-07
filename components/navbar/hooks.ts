@@ -20,14 +20,31 @@ export const useNavItems = (
       return hasRequiredRole(userRoles, item.roles);
     });
 
-    return filteredItems.map((item) => ({
-      ...item,
-      href: item.href ? `${basePath}${item.href}` : item.href,
-      children: item.children?.map((c) => ({
-        ...c,
-        href: `${basePath}${c.href}`,
-      })),
-    }));
+    const resolveAdminHref = (): string | undefined => {
+      // Pick the first admin section the user can access
+      const target = ADMIN_NAV_ITEMS.find((adminItem) =>
+        adminItem.roles ? hasRequiredRole(userRoles, adminItem.roles) : true
+      );
+      return target?.href;
+    };
+
+    return filteredItems.map((item) => {
+      let href = item.href;
+
+      // For the pilot navbar's Admin tab, point to the first allowed admin section
+      if (!isAdminRoute && item.key === 'admin') {
+        href = resolveAdminHref() ?? href;
+      }
+
+      return {
+        ...item,
+        href: href ? `${basePath}${href}` : href,
+        children: item.children?.map((c) => ({
+          ...c,
+          href: `${basePath}${c.href}`,
+        })),
+      };
+    });
   }, [basePath, userRoles, isAdminRoute]);
 
 export const useActiveIndex = (

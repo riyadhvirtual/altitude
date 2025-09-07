@@ -19,7 +19,7 @@ export const PILOT_NAV_ITEMS: NavItem[] = [
   {
     key: 'admin',
     label: 'Admin',
-    href: '/admin/pireps/approved',
+    href: '/admin/pireps/status/approved',
     roles: [
       'pireps',
       'fleet',
@@ -37,7 +37,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   {
     key: 'pireps',
     label: 'PIREPs',
-    href: '/admin/pireps/approved',
+    href: '/admin/pireps/status/approved',
     roles: ['pireps'],
   },
   {
