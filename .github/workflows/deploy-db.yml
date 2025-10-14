@@ -3,7 +3,7 @@ name: Deploy Migrations to Neon
 on:
   push:
     branches:
-      - main  # or your deploy branch
+      - main
 
 jobs:
   migrate:
@@ -21,7 +21,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # ✅ FIX: Use the correct secret name
+      - name: Install Postgres driver
+        run: npm install @neondatabase/serverless
+
       - name: Set DATABASE_URL
         run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
 
