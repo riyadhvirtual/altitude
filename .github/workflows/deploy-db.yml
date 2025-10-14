@@ -3,31 +3,27 @@ name: Deploy Migrations to Neon
 on:
   push:
     branches:
-      - main  # Or your deployment branch
+      - main  # or your deploy branch
 
 jobs:
   migrate:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'  # Adjust if needed
+          node-version: '20'
 
-      # Step 3: Install dependencies
       - name: Install dependencies
         run: npm install
 
-      # Step 4: Set DATABASE_URL environment variable
+      # ✅ FIX: Use the correct secret name
       - name: Set DATABASE_URL
         run: echo "DATABASE_URL=${{ secrets.NEON_DATABASE_URL }}" >> $GITHUB_ENV
 
-      # Step 5: Run migrations
       - name: Run Drizzle migrations
         run: npx drizzle-kit migrate
