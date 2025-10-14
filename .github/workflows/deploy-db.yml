@@ -23,7 +23,7 @@ jobs:
 
       # ✅ FIX: Use the correct secret name
       - name: Set DATABASE_URL
-        run: echo "DATABASE_URL=${{ secrets.NEON_DATABASE_URL }}" >> $GITHUB_ENV
+        run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
 
       - name: Run Drizzle migrations
         run: npx drizzle-kit migrate
