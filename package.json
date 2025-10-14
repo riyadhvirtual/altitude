@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "bunx --bun next build",
-    "start": "bunx --bun next start",
+    "start": "bunx --bun next start -p $PORT",
     "cron": "bun run jobs/scheduler.ts",
     "bot": "bun run bot/index.ts",
     "bot:dev": "bun run --watch bot/index.ts",
